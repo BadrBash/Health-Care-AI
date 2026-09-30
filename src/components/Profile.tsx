@@ -1,14 +1,20 @@
-import { Bell, Lock, Mail, Phone, Save, User } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Lock, Mail, Phone, Save, User, Loader, AlertCircle, CheckCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase, type ProfileData } from '../lib/supabaseClient';
 
 export default function Profile() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
-    name: 'Dr. Sarah Wilson',
-    email: 'sarah.wilson@healthcare.com',
-    phone: '+1 (555) 123-4567',
-    specialization: 'Internal Medicine',
-    license: 'MD-123456',
-    experience: '12 years',
+    name: '',
+    email: '',
+    phone: '',
+    specialization: '',
+    license: '',
+    experience: '',
   });
 
   const [notifications, setNotifications] = useState({
@@ -18,6 +24,39 @@ export default function Profile() {
     updates: true,
   });
 
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function loadProfile() {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: queryError } = await supabase.from('profile').select('*').limit(1).maybeSingle();
+
+      if (queryError) throw queryError;
+
+      if (data) {
+        const profile = data as ProfileData;
+        setProfileId(profile.id);
+        setProfileData({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          specialization: profile.specialization,
+          license: profile.license,
+          experience: profile.experience,
+        });
+        setNotifications(profile.notifications);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load profile';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
   };
@@ -26,13 +65,66 @@ export default function Profile() {
     setNotifications({ ...notifications, [key]: !notifications[key as keyof typeof notifications] });
   };
 
-  const handleSave = () => {
-    console.log('Saving profile:', profileData);
-    console.log('Saving notifications:', notifications);
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+
+    try {
+      const payload = {
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        specialization: profileData.specialization,
+        license: profileData.license,
+        experience: profileData.experience,
+        notifications,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (profileId) {
+        const { error: updateError } = await supabase.from('profile').update(payload).eq('id', profileId);
+        if (updateError) throw updateError;
+      } else {
+        const { data, error: insertError } = await supabase.from('profile').insert(payload).select().single();
+        if (insertError) throw insertError;
+        if (data) setProfileId(data.id);
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save profile';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="flex items-center space-x-3 text-red-600 bg-red-50 px-6 py-4 rounded-lg">
+          <AlertCircle className="w-5 h-5" />
+          <span className="text-sm">{error}</span>
+        </div>
+      )}
+
+      {saved && (
+        <div className="flex items-center space-x-3 text-green-600 bg-green-50 px-6 py-4 rounded-lg">
+          <CheckCircle className="w-5 h-5" />
+          <span className="text-sm">Profile saved successfully</span>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
         <p className="text-gray-600 mt-1">Manage your account information and preferences</p>
@@ -169,10 +261,20 @@ export default function Profile() {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={saving}
+              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              <Save className="w-5 h-5" />
-              <span>Save Changes</span>
+              {saving ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  <span>Save Changes</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -183,8 +285,8 @@ export default function Profile() {
               <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center mb-4">
                 <User className="w-12 h-12 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">{profileData.name}</h3>
-              <p className="text-sm text-gray-600 mt-1">{profileData.specialization}</p>
+              <h3 className="text-lg font-bold text-gray-900">{profileData.name || 'Your Name'}</h3>
+              <p className="text-sm text-gray-600 mt-1">{profileData.specialization || 'Specialization'}</p>
               <button className="mt-4 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                 Change Photo
               </button>

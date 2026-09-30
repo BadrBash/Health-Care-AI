@@ -1,37 +1,123 @@
-import { Calendar, Clock, MapPin, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, Clock, MapPin, Plus, Search, Loader, AlertCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase, type Appointment, type Doctor } from '../lib/supabaseClient';
 
 export default function Appointments() {
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     patientName: '',
     date: '',
     time: '',
-    type: '',
+    type: 'Check-up',
     doctor: '',
     notes: '',
   });
 
-  const appointments = [
-    { id: 1, patient: 'John Smith', date: '2024-03-15', time: '10:00 AM', doctor: 'Dr. Sarah Wilson', type: 'Check-up', status: 'upcoming' },
-    { id: 2, patient: 'Sarah Johnson', date: '2024-03-15', time: '11:30 AM', doctor: 'Dr. Michael Chen', type: 'Consultation', status: 'upcoming' },
-    { id: 3, patient: 'Michael Brown', date: '2024-03-14', time: '2:00 PM', doctor: 'Dr. Emily Davis', type: 'Follow-up', status: 'completed' },
-    { id: 4, patient: 'Emily Davis', date: '2024-03-16', time: '3:30 PM', doctor: 'Dr. Sarah Wilson', type: 'Diagnosis', status: 'upcoming' },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    setLoading(true);
+    setError(null);
+    try {
+      const [apptRes, docRes] = await Promise.all([
+        supabase.from('appointments').select('*').order('appointment_date', { ascending: false }),
+        supabase.from('doctors').select('*').order('name'),
+      ]);
+
+      if (apptRes.error) throw apptRes.error;
+      if (docRes.error) throw docRes.error;
+
+      setAppointments(apptRes.data ?? []);
+      setDoctors(docRes.data ?? []);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load appointments';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Booking appointment:', formData);
-    setShowBookingForm(false);
-    setFormData({ patientName: '', date: '', time: '', type: '', doctor: '', notes: '' });
+    setSubmitting(true);
+    setError(null);
+
+    const selectedDoctor = doctors.find((d) => d.id === formData.doctor);
+
+    try {
+      const { error: insertError } = await supabase.from('appointments').insert({
+        patient_name: formData.patientName,
+        doctor_id: formData.doctor || null,
+        doctor_name: selectedDoctor?.name ?? 'Unassigned',
+        appointment_date: formData.date,
+        appointment_time: formData.time,
+        type: formData.type,
+        status: 'upcoming',
+        notes: formData.notes || null,
+      });
+
+      if (insertError) throw insertError;
+
+      setFormData({ patientName: '', date: '', time: '', type: 'Check-up', doctor: '', notes: '' });
+      setShowBookingForm(false);
+      await loadData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to book appointment';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  async function handleDelete(id: string) {
+    try {
+      const { error: deleteError } = await supabase.from('appointments').delete().eq('id', id);
+      if (deleteError) throw deleteError;
+      await loadData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete appointment';
+      setError(msg);
+    }
+  }
+
+  const filteredAppointments = appointments.filter((a) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      a.patient_name.toLowerCase().includes(q) ||
+      a.doctor_name.toLowerCase().includes(q) ||
+      a.type.toLowerCase().includes(q)
+    );
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="flex items-center space-x-3 text-red-600 bg-red-50 px-6 py-4 rounded-lg">
+          <AlertCircle className="w-5 h-5" />
+          <span className="text-sm">{error}</span>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
@@ -72,12 +158,11 @@ export default function Appointments() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Select type</option>
-                  <option value="checkup">Regular Check-up</option>
-                  <option value="consultation">Consultation</option>
-                  <option value="followup">Follow-up</option>
-                  <option value="diagnosis">Diagnosis</option>
-                  <option value="emergency">Emergency</option>
+                  <option value="Check-up">Regular Check-up</option>
+                  <option value="Consultation">Consultation</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Diagnosis">Diagnosis</option>
+                  <option value="Emergency">Emergency</option>
                 </select>
               </div>
               <div>
@@ -112,10 +197,11 @@ export default function Appointments() {
                   required
                 >
                   <option value="">Select doctor</option>
-                  <option value="dr-wilson">Dr. Sarah Wilson</option>
-                  <option value="dr-chen">Dr. Michael Chen</option>
-                  <option value="dr-davis">Dr. Emily Davis</option>
-                  <option value="dr-johnson">Dr. Robert Johnson</option>
+                  {doctors.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.name} — {doc.specialization}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -140,9 +226,10 @@ export default function Appointments() {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={submitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Book Appointment
+                {submitting ? 'Booking...' : 'Book Appointment'}
               </button>
             </div>
           </form>
@@ -158,54 +245,63 @@ export default function Appointments() {
               <input
                 type="text"
                 placeholder="Search appointments..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
         </div>
         <div className="divide-y divide-gray-100">
-          {appointments.map((appointment) => (
-            <div key={appointment.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4 mb-3">
-                    <h3 className="font-semibold text-gray-900 text-lg">{appointment.patient}</h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        appointment.status === 'upcoming'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
+          {filteredAppointments.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">No appointments found</div>
+          ) : (
+            filteredAppointments.map((appointment) => (
+              <div key={appointment.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-4 mb-3">
+                      <h3 className="font-semibold text-gray-900 text-lg">{appointment.patient_name}</h3>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          appointment.status === 'upcoming'
+                            ? 'bg-blue-100 text-blue-700'
+                            : appointment.status === 'completed'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {appointment.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{appointment.appointment_date}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4" />
+                        <span>{appointment.appointment_time}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{appointment.doctor_name}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleDelete(appointment.id)}
+                      className="flex items-center space-x-1 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
-                      {appointment.status}
-                    </span>
+                      <Trash2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Cancel</span>
+                    </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{appointment.date}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4" />
-                      <span>{appointment.time}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{appointment.doctor}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    View
-                  </button>
-                  <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                    Reschedule
-                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

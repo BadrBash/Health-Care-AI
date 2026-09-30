@@ -1,19 +1,75 @@
-import { Calendar, Clock, TrendingUp, Users } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, Users, Loader, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase, type Appointment } from '../lib/supabaseClient';
 
 export default function Dashboard() {
-  const stats = [
-    { label: 'Total Appointments', value: '24', icon: Calendar, color: 'bg-blue-500' },
-    { label: 'Pending Reviews', value: '8', icon: Clock, color: 'bg-amber-500' },
-    { label: 'Active Patients', value: '156', icon: Users, color: 'bg-green-500' },
-    { label: 'Recovery Rate', value: '94%', icon: TrendingUp, color: 'bg-teal-500' },
-  ];
+  const [stats, setStats] = useState([
+    { label: 'Total Appointments', value: '—', icon: Calendar, color: 'bg-blue-500' },
+    { label: 'Pending Reviews', value: '—', icon: Clock, color: 'bg-amber-500' },
+    { label: 'Active Patients', value: '—', icon: Users, color: 'bg-green-500' },
+    { label: 'Recovery Rate', value: '—', icon: TrendingUp, color: 'bg-teal-500' },
+  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const upcomingAppointments = [
-    { id: 1, patient: 'John Smith', time: '10:00 AM', type: 'Check-up', status: 'confirmed' },
-    { id: 2, patient: 'Sarah Johnson', time: '11:30 AM', type: 'Consultation', status: 'pending' },
-    { id: 3, patient: 'Michael Brown', time: '2:00 PM', type: 'Follow-up', status: 'confirmed' },
-    { id: 4, patient: 'Emily Davis', time: '3:30 PM', type: 'Diagnosis', status: 'confirmed' },
-  ];
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [apptRes, patientRes, pendingRes, resolvedRes] = await Promise.all([
+          supabase.from('appointments').select('*').order('appointment_date', { ascending: false }).limit(10),
+          supabase.from('patients').select('*', { count: 'exact', head: true }),
+          supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'upcoming'),
+          supabase.from('diagnoses').select('*', { count: 'exact', head: true }).eq('status', 'Resolved'),
+        ]);
+
+        if (apptRes.error) throw apptRes.error;
+
+        const totalAppts = (await supabase.from('appointments').select('*', { count: 'exact', head: true })).count ?? 0;
+        const totalPatients = patientRes.count ?? 0;
+        const pendingCount = pendingRes.count ?? 0;
+        const resolvedCount = resolvedRes.count ?? 0;
+        const recoveryRate = totalAppts > 0 ? Math.round((resolvedCount / totalAppts) * 100) : 0;
+
+        setStats([
+          { label: 'Total Appointments', value: String(totalAppts), icon: Calendar, color: 'bg-blue-500' },
+          { label: 'Pending Reviews', value: String(pendingCount), icon: Clock, color: 'bg-amber-500' },
+          { label: 'Active Patients', value: String(totalPatients), icon: Users, color: 'bg-green-500' },
+          { label: 'Recovery Rate', value: `${recoveryRate}%`, icon: TrendingUp, color: 'bg-teal-500' },
+        ]);
+        setAppointments(apptRes.data ?? []);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex items-center space-x-3 text-red-600 bg-red-50 px-6 py-4 rounded-lg">
+          <AlertCircle className="w-6 h-6" />
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -46,35 +102,39 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-gray-900">Today's Appointments</h2>
         </div>
         <div className="divide-y divide-gray-100">
-          {upcomingAppointments.map((appointment) => (
-            <div key={appointment.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-600" />
+          {appointments.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">No appointments scheduled</div>
+          ) : (
+            appointments.map((appointment) => (
+              <div key={appointment.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Users className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{appointment.patient_name}</h3>
+                      <p className="text-sm text-gray-600">{appointment.type}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{appointment.patient}</h3>
-                    <p className="text-sm text-gray-600">{appointment.type}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{appointment.time}</p>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${
-                        appointment.status === 'confirmed'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}
-                    >
-                      {appointment.status}
-                    </span>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">{appointment.appointment_time}</p>
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${
+                          appointment.status === 'confirmed' || appointment.status === 'upcoming'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {appointment.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
