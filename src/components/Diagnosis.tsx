@@ -1,32 +1,20 @@
 import { Activity, AlertCircle, Brain, CheckCircle, FileText, Loader, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { fetchDiagnosis, DiagnosisApiResult, fetchRecentDiagnoses, RecentDiagnosis } from '../services/djangoApi';
+import { useState } from 'react';
 
 export default function Diagnosis() {
   const [symptoms, setSymptoms] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [diagnosisResults, setDiagnosisResults] = useState<DiagnosisApiResult[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [recentDiagnoses, setRecentDiagnoses] = useState<RecentDiagnosis[]>([]);
-  const [recentError, setRecentError] = useState<string | null>(null);
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     setIsAnalyzing(true);
-    setError(null);
-    try {
-      const results = await fetchDiagnosis(symptoms);
-      setDiagnosisResults(results);
-      setShowResults(true);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to fetch diagnosis');
-      setShowResults(false);
-    } finally {
+    setTimeout(() => {
       setIsAnalyzing(false);
-    }
+      setShowResults(true);
+    }, 2000);
   };
 
-  const sampleDiagnosisResults = [
+  const diagnosisResults = [
     {
       condition: 'Common Cold',
       probability: 78,
@@ -49,25 +37,12 @@ export default function Diagnosis() {
       recommendations: ['Antiviral medication if caught early', 'Complete rest', 'Stay hydrated'],
     },
   ];
-  const sampleRecentDiagnoses = [
+
+  const recentDiagnoses = [
     { id: 1, patient: 'John Smith', date: '2024-03-12', condition: 'Hypertension', status: 'Under Treatment' },
     { id: 2, patient: 'Sarah Johnson', date: '2024-03-11', condition: 'Type 2 Diabetes', status: 'Monitoring' },
     { id: 3, patient: 'Michael Brown', date: '2024-03-10', condition: 'Migraine', status: 'Resolved' },
   ];
-
-  useEffect(() => {
-    let mounted = true;
-    fetchRecentDiagnoses()
-      .then((items) => {
-        if (mounted) setRecentDiagnoses(items);
-      })
-      .catch((err: any) => {
-        if (mounted) setRecentError(err?.message || 'Failed to load recent diagnoses');
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -165,7 +140,7 @@ export default function Diagnosis() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Analysis Results</h2>
               <div className="space-y-4">
-                {(diagnosisResults.length ? diagnosisResults : sampleDiagnosisResults).map((result, index) => (
+                {diagnosisResults.map((result, index) => (
                   <div
                     key={index}
                     className="border border-gray-200 rounded-lg p-5 hover:border-blue-300 transition-colors"
@@ -207,9 +182,6 @@ export default function Diagnosis() {
                   </div>
                 ))}
               </div>
-              {error && (
-                <div className="mt-4 text-sm text-red-600">Error: {error}</div>
-              )}
               <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800">
@@ -224,7 +196,7 @@ export default function Diagnosis() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Diagnoses</h3>
             <div className="space-y-3">
-              {(recentDiagnoses.length ? recentDiagnoses : sampleRecentDiagnoses).map((diagnosis) => (
+              {recentDiagnoses.map((diagnosis) => (
                 <div key={diagnosis.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold text-gray-900">{diagnosis.patient}</h4>
@@ -237,7 +209,6 @@ export default function Diagnosis() {
                   </div>
                 </div>
               ))}
-              {recentError && <div className="text-sm text-red-600">Error: {recentError}</div>}
             </div>
           </div>
 
