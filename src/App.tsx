@@ -5,9 +5,25 @@ import Appointments from './components/Appointments';
 import Diagnosis from './components/Diagnosis';
 import Records from './components/Records';
 import Profile from './components/Profile';
+import AuthPage from './components/AuthPage';
+import { AuthProvider, useAuth } from './lib/auth';
+import { Loader } from 'lucide-react';
 
-function App() {
+function AppContent() {
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -17,7 +33,7 @@ function App() {
         return <Appointments />;
       case 'diagnosis':
         return <Diagnosis />;
-        case 'records':
+      case 'records':
         return <Records />;
       case 'profile':
         return <Profile />;
@@ -33,6 +49,14 @@ function App() {
         {renderContent()}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
