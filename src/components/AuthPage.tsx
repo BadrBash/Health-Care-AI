@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, AlertCircle, Loader, Lock, Mail } from 'lucide-react';
+import { HeartPulse, AlertCircle, Loader, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function AuthPage() {
@@ -41,10 +41,10 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <Activity className="w-8 h-8 text-white" />
+            <HeartPulse className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">HealthCare AI</h1>
-          <p className="text-gray-600 mt-2">Intelligent healthcare management</p>
+          <h1 className="text-3xl font-bold text-gray-900">PulseTrack</h1>
+          <p className="text-gray-600 mt-2">Monitor your health, every day</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">

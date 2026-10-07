@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import Navbar from './components/Navbar';
-import Dashboard from './components/Dashboard';
-import Appointments from './components/Appointments';
-import Diagnosis from './components/Diagnosis';
-import Records from './components/Records';
+import BottomNav from './components/BottomNav';
+import HealthDashboard from './components/HealthDashboard';
+import HeartRateMonitor from './components/HeartRateMonitor';
+import StepTracker from './components/StepTracker';
+import WaterReminder from './components/WaterReminder';
 import Profile from './components/Profile';
 import AuthPage from './components/AuthPage';
 import { AuthProvider, useAuth } from './lib/auth';
@@ -11,7 +11,7 @@ import { Loader } from 'lucide-react';
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('home');
 
   if (loading) {
     return (
@@ -27,27 +27,27 @@ function AppContent() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'appointments':
-        return <Appointments />;
-      case 'diagnosis':
-        return <Diagnosis />;
-      case 'records':
-        return <Records />;
+      case 'home':
+        return <HealthDashboard />;
+      case 'heart':
+        return <HeartRateMonitor />;
+      case 'steps':
+        return <StepTracker />;
+      case 'water':
+        return <WaterReminder />;
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard />;
+        return <HealthDashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-24 min-h-screen">
         {renderContent()}
-      </main>
+      </div>
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 }

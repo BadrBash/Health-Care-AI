@@ -5,80 +5,40 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export interface Doctor {
+export interface HeartRateLog {
   id: string;
-  name: string;
-  specialization: string;
+  user_id: string;
+  bpm: number;
+  context: string;
+  logged_at: string;
+}
+
+export interface StepLog {
+  id: string;
+  user_id: string;
+  steps: number;
+  distance_meters: number;
+  calories: number;
+  log_date: string;
   created_at: string;
 }
 
-export interface Patient {
+export interface WaterLog {
   id: string;
-  name: string;
-  date_of_birth: string | null;
-  phone: string | null;
-  email: string | null;
+  user_id: string;
+  amount_ml: number;
+  logged_at: string;
+}
+
+export interface DailyGoals {
+  id: string;
+  user_id: string;
+  step_goal: number;
+  water_goal_ml: number;
+  min_heart_rate: number;
+  max_heart_rate: number;
   created_at: string;
-}
-
-export interface Appointment {
-  id: string;
-  patient_id: string | null;
-  patient_name: string;
-  doctor_id: string | null;
-  doctor_name: string;
-  appointment_date: string;
-  appointment_time: string;
-  type: string;
-  status: string;
-  notes: string | null;
-  created_at: string;
-}
-
-export interface MedicalRecord {
-  id: string;
-  patient_id: string | null;
-  patient_name: string;
-  doctor_id: string | null;
-  doctor_name: string;
-  record_date: string;
-  type: string;
-  diagnosis: string | null;
-  prescription: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
-export interface DiagnosisResult {
-  condition: string;
-  probability: number;
-  severity: string;
-  description: string;
-  recommendations: string[];
-}
-
-export interface Diagnosis {
-  id: string;
-  patient_name: string;
-  symptoms: string;
-  duration: string | null;
-  severity: string | null;
-  results: DiagnosisResult[] | null;
-  status: string;
-  diagnosis_date: string;
-  created_at: string;
-}
-
-export interface VitalSign {
-  id: string;
-  patient_id: string | null;
-  patient_name: string;
-  blood_pressure: string | null;
-  heart_rate: string | null;
-  temperature: string | null;
-  oxygen_saturation: string | null;
-  status: string;
-  recorded_at: string;
+  updated_at: string;
 }
 
 export interface ProfileData {
