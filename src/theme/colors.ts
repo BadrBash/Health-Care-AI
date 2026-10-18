@@ -1,0 +1,28 @@
+export const Colors = {
+  primary: '#0ea5e9',
+  primaryDark: '#0284c7',
+  primaryLight: '#e0f2fe',
+  red: '#ef4444',
+  redDark: '#dc2626',
+  redLight: '#fef2f2',
+  cyan: '#06b6d4',
+  cyanLight: '#cffafe',
+  green: '#22c55e',
+  greenLight: '#f0fdf4',
+  amber: '#f59e0b',
+  amberLight: '#fffbeb',
+  orange: '#f97316',
+  gray50: '#f9fafb',
+  gray100: '#f3f4f6',
+  gray200: '#e5e7eb',
+  gray300: '#d1d5db',
+  gray400: '#9ca3af',
+  gray500: '#6b7280',
+  gray600: '#4b5563',
+  gray700: '#374151',
+  gray800: '#1f2937',
+  gray900: '#111827',
+  white: '#ffffff',
+};
+
+export type Theme = typeof Colors;

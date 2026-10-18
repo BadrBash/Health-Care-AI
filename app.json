@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "PulseTrack",
+    "slug": "pulsetrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0ea5e9"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pulsetrack.app",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "PulseTrack reads your heart rate and step count from Apple Health to display them in the app.",
+        "NSHealthUpdateUsageDescription": "PulseTrack writes your logged water intake to Apple Health."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0ea5e9"
+      },
+      "package": "com.pulsetrack.app"
+    },
+    "plugins": [],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

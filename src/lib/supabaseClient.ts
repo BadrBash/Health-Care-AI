@@ -1,9 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
+import 'react-native-url-polyfill/auto';
+import * as AsyncLocalStorage from '@react-native-async-storage/async-storage';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncLocalStorage as any,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
 
 export interface HeartRateLog {
   id: string;
@@ -38,22 +47,5 @@ export interface DailyGoals {
   min_heart_rate: number;
   max_heart_rate: number;
   created_at: string;
-  updated_at: string;
-}
-
-export interface ProfileData {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  specialization: string;
-  license: string;
-  experience: string;
-  notifications: {
-    appointments: boolean;
-    reminders: boolean;
-    reports: boolean;
-    updates: boolean;
-  };
   updated_at: string;
 }
