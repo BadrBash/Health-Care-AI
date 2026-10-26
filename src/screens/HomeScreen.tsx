@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Heart, Footprints, Droplet, Flame, MapPin, TrendingUp } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase, type HeartRateLog, type StepLog, type WaterLog, type DailyGoals } from '../lib/supabaseClient';
 import { Colors } from '../theme/colors';
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [latestHeart, setLatestHeart] = useState<HeartRateLog | null>(null);
@@ -82,7 +84,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 16) + 8, paddingBottom: Math.max(insets.bottom, 24) + 60 }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
     >
       <View style={styles.header}>

@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { Heart, Plus, Trash2, Activity, AlertCircle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase, type HeartRateLog, type DailyGoals } from '../lib/supabaseClient';
 import { Colors } from '../theme/colors';
 
 export default function HeartRateScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [logs, setLogs] = useState<HeartRateLog[]>([]);
@@ -112,7 +114,7 @@ export default function HeartRateScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 16) + 8, paddingBottom: Math.max(insets.bottom, 24) + 60 }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
     >
       <View style={styles.headerRow}>
@@ -212,7 +214,7 @@ export default function HeartRateScreen() {
       {/* Add Modal */}
       <Modal visible={showAddForm} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 24) + 24 }]}>
             <Text style={styles.modalTitle}>Log New Reading</Text>
 
             <Text style={styles.inputLabel}>Heart Rate (BPM)</Text>

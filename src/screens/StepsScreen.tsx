@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, RefreshControl, Alert, ViewStyle } from 'react-native';
 import { Footprints, Plus, Trash2, Flame, MapPin } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { supabase, type StepLog, type DailyGoals } from '../lib/supabaseClient';
 import { Colors } from '../theme/colors';
@@ -32,6 +33,7 @@ function ProgressRing({ progress, strokeDash, circumference }: { progress: numbe
 }
 
 export default function StepsScreen() {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [todayLog, setTodayLog] = useState<StepLog | null>(null);
@@ -152,7 +154,7 @@ export default function StepsScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 16) + 8, paddingBottom: Math.max(insets.bottom, 24) + 60 }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
     >
       <View style={styles.headerRow}>
@@ -248,7 +250,7 @@ export default function StepsScreen() {
       {/* Add Modal */}
       <Modal visible={showAddForm} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 24) + 24 }]}>
             <Text style={styles.modalTitle}>Add Steps</Text>
 
             <Text style={styles.inputLabel}>Number of Steps</Text>

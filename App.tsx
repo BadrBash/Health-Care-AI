@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Heart, Footprints, Droplet, User } from 'lucide-react-native';
 import { AuthProvider, useAuth } from './src/lib/auth';
 import { Colors } from './src/theme/colors';
@@ -15,6 +16,11 @@ import ProfileScreen from './src/screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 
 function MainApp() {
+  const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
+  // On iOS Safari, reserve room for the home indicator; on web, keep it compact.
+  const bottomInset = isWeb ? 8 : Math.max(insets.bottom, 16);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -22,15 +28,19 @@ function MainApp() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray400,
         tabBarStyle: {
-          paddingBottom: 4,
-          paddingTop: 6,
-          height: 60,
+          paddingBottom: bottomInset,
+          paddingTop: 8,
+          height: 60 + bottomInset,
           borderTopWidth: 1,
           borderTopColor: Colors.gray100,
         },
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '500',
+          marginBottom: 2,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
       }}
     >
@@ -93,12 +103,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <StatusBar style="dark" />
-      <NavigationContainer>
-        <AppContent />
-      </NavigationContainer>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StatusBar style="dark" />
+        <NavigationContainer>
+          <AppContent />
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

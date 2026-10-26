@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Switch } from 'react-native';
 import { Bell, Target, Save, LogOut, User, CheckCircle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase, type DailyGoals } from '../lib/supabaseClient';
 import { useAuth } from '../lib/auth';
 import { Colors } from '../theme/colors';
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -101,7 +103,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 16) + 8, paddingBottom: Math.max(insets.bottom, 24) + 60 }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
         <Text style={styles.subtitle}>Manage your goals and preferences</Text>
