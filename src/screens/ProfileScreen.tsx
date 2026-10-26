@@ -137,6 +137,22 @@ export default function ProfileScreen() {
             onChangeText={(v) => handleGoalChange('step_goal', v)}
             keyboardType="number-pad"
           />
+          <View style={styles.presetRow}>
+            {[5000, 8000, 10000, 15000].map((preset) => {
+              const active = goals.step_goal === preset;
+              return (
+                <TouchableOpacity
+                  key={preset}
+                  style={[styles.presetChip, active && styles.presetChipActive]}
+                  onPress={() => setGoals({ ...goals, step_goal: preset })}
+                >
+                  <Text style={[styles.presetChipText, active && styles.presetChipTextActive]}>
+                    {preset >= 1000 ? `${preset / 1000}K` : `${preset}`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.inputGroup}>
@@ -329,6 +345,32 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: Colors.gray900,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  presetChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.gray200,
+    backgroundColor: Colors.gray50,
+    alignItems: 'center',
+  },
+  presetChipActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  presetChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.gray500,
+  },
+  presetChipTextActive: {
+    color: Colors.primary,
   },
   row: {
     flexDirection: 'row',

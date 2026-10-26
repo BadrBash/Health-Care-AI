@@ -1,12 +1,27 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, RefreshControl, Alert, ViewStyle } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, ActivityIndicator, RefreshControl, Alert, ViewStyle, Animated } from 'react-native';
 import { Footprints, Plus, Trash2, Flame, MapPin } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { supabase, type StepLog, type DailyGoals } from '../lib/supabaseClient';
 import { Colors } from '../theme/colors';
 
-function ProgressRing({ progress, strokeDash, circumference }: { progress: number; strokeDash: number; circumference: number }) {
+function ProgressRing({ strokeDash, circumference }: { strokeDash: number; circumference: number }) {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: strokeDash,
+      duration: 900,
+      useNativeDriver: false,
+    }).start();
+  }, [strokeDash]);
+
+  const dashArray = anim.interpolate({
+    inputRange: [0, circumference],
+    outputRange: [`0 ${circumference}`, `${strokeDash} ${circumference}`],
+  });
+
   return (
     <Svg style={styles.circleSvg} viewBox="0 0 160 160">
       <Defs>
@@ -16,7 +31,7 @@ function ProgressRing({ progress, strokeDash, circumference }: { progress: numbe
         </LinearGradient>
       </Defs>
       <Circle cx="80" cy="80" r="70" fill="none" stroke={Colors.gray200} strokeWidth={12} />
-      <Circle
+      <AnimatedCircle
         cx="80"
         cy="80"
         r="70"
@@ -24,13 +39,15 @@ function ProgressRing({ progress, strokeDash, circumference }: { progress: numbe
         stroke="url(#stepGrad)"
         strokeWidth={12}
         strokeLinecap="round"
-        strokeDasharray={`${strokeDash} ${circumference}`}
+        strokeDasharray={dashArray}
         rotation="-90"
         origin="80,80"
       />
     </Svg>
   );
 }
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function StepsScreen() {
   const insets = useSafeAreaInsets();
@@ -171,7 +188,7 @@ export default function StepsScreen() {
       {/* Circular progress */}
       <View style={styles.circleCard}>
         <View style={styles.circleWrapper}>
-          <ProgressRing progress={progress} strokeDash={strokeDash} circumference={circumference} />
+          <ProgressRing strokeDash={strokeDash} circumference={circumference} />
           <View style={styles.circleInner}>
             <Footprints size={28} color={Colors.primary} />
             <Text style={styles.circleValue}>{currentSteps.toLocaleString()}</Text>
