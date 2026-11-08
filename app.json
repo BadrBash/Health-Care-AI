@@ -26,6 +26,12 @@
     "web": {
       "bundler": "metro",
       "output": "single"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1bb045df-29db-47b2-ac74-4e6ddac940fa"
+      }
+    },
+    "owner": "techbro_1"
   }
 }
