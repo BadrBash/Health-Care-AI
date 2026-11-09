@@ -7,20 +7,16 @@ import { supabase, type StepLog, type DailyGoals } from '../lib/supabaseClient';
 import { Colors } from '../theme/colors';
 
 function ProgressRing({ strokeDash, circumference }: { strokeDash: number; circumference: number }) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const anim = useRef(new Animated.Value(circumference)).current;
 
   useEffect(() => {
+    anim.setValue(circumference);
     Animated.timing(anim, {
-      toValue: strokeDash,
+      toValue: circumference - strokeDash,
       duration: 900,
       useNativeDriver: false,
     }).start();
-  }, [strokeDash]);
-
-  const dashArray = anim.interpolate({
-    inputRange: [0, circumference],
-    outputRange: [`0 ${circumference}`, `${strokeDash} ${circumference}`],
-  });
+  }, [anim, circumference, strokeDash]);
 
   return (
     <Svg style={styles.circleSvg} viewBox="0 0 160 160">
@@ -39,7 +35,8 @@ function ProgressRing({ strokeDash, circumference }: { strokeDash: number; circu
         stroke="url(#stepGrad)"
         strokeWidth={12}
         strokeLinecap="round"
-        strokeDasharray={dashArray}
+        strokeDasharray={[circumference, circumference]}
+        strokeDashoffset={anim}
         rotation="-90"
         origin="80,80"
       />
