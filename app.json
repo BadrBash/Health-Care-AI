@@ -17,6 +17,9 @@
       }
     },
     "android": {
+      "permissions": [
+  "android.permission.ACTIVITY_RECOGNITION"
+  ],
       "adaptiveIcon": {
         "backgroundColor": "#0ea5e9"
       },

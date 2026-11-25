@@ -44,6 +44,8 @@ export interface StepLog {
   id: string;
   user_id: string;
   steps: number;
+  manual_steps: number;
+  sensor_steps: number;
   distance_meters: number;
   calories: number;
   log_date: string;
